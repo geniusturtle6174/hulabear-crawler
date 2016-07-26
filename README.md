@@ -12,4 +12,5 @@ Crawler for BBS hulabear
 - https://docs.python.org/2/library/telnetlib.html
 
 # Todo
-- Read whole article
+- Remove repeatitions in article
+- Beautify the output
