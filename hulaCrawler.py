@@ -1,10 +1,14 @@
 # coding=utf-8
 # Ref: http://mhwong2007.logdown.com/posts/314403
 # Parameters: account, password (optional), board name
-# Note:
-#   - Assuming no "Announcement"
-#   - Assuming input parameters are correct
+# Assumptions:
+#   - No "Announcement"
+#   - Input parameters are correct
+#   - The entered account is currently not login
+#   - The entered account can read ALL the article in the specified range
+# Notes:
 #   - You may need to install "pyte" or other libs
+#   - Remember to download uao_decode (https://gist.github.com/andycjw/5617496)
 import telnetlib, pyte, uao_decode, codecs
 import sys, time, re, argparse
 
@@ -13,11 +17,15 @@ siteName = 'hulabear.twbbs.org'
 parser = argparse.ArgumentParser(description='Hulabear crawler for ONE board')
 parser.add_argument('account')
 parser.add_argument('board')
+parser.add_argument('startPostId', type=int)
+parser.add_argument('endPostId'  , type=int)
 parser.add_argument('--password'  , '-p' , default='')
 args = parser.parse_args()
 account  = args.account
 board    = args.board
 password = args.password
+startId  = args.startPostId
+endId    = args.endPostId
 
 screen = pyte.Screen(80, 24)
 stream = pyte.Stream()
@@ -25,38 +33,50 @@ stream.attach(screen)
 tn = telnetlib.Telnet(siteName)
 
 # Login
-tn.read_until('½Ğ¿é¤J¥N¸¹¡G')
+tn.read_until('è«‹è¼¸å…¥ä»£è™Ÿï¼š')
 if(account=='guest'):
     tn.write(account + '\r\n'*4)
-    tn.read_until('¡i ¦A§OºµºÛ ¡j')
+    tn.read_until('ã€ å†åˆ¥ç†Šçª© ã€‘')
 else:
     tn.write(account + '\r\n')
-    tn.read_until('½Ğ¿é¤J±K½X¡G')
+    tn.read_until('è«‹è¼¸å…¥å¯†ç¢¼ï¼š')
     tn.write(password + '\r\n'*2)
 
-# ¥D¿ï³æ¡A«ö s ·j´M»P¶iªO
+# ä¸»é¸å–®ï¼ŒæŒ‰ s æœå°‹èˆ‡é€²æ¿
 tn.write('\r\ns')
-tn.read_until('½Ğ¿é¤J¬İªO¦WºÙ(«öªÅ¥ÕÁä¦Û°Ê·j´M)¡G')
+tn.read_until('è«‹è¼¸å…¥çœ‹æ¿åç¨±(æŒ‰ç©ºç™½éµè‡ªå‹•æœå°‹)ï¼š')
 tn.read_very_eager() # used to clear buffer
 tn.write(board + '\r\n')
 
-# ³B²z¬O§_¦³¶iªOµe­±
-tup = tn.expect(['¢j¢k¢l¢m¢n¢o¢p\s\x1B\[1;37m½Ğ«ö¥ô·NÁäÄ~Äò\s\x1B\[1;33m¢p\x1B\[m'], 1)
-if(tup[0]!=-1): # ¦³
+# è™•ç†æ˜¯å¦æœ‰é€²æ¿ç•«é¢
+tup = tn.expect(['â–â–â–â–Œâ–‹â–Šâ–‰\s\x1B\[1;37mè«‹æŒ‰ä»»æ„éµç¹¼çºŒ\s\x1B\[1;33mâ–‰\x1B\[m'], 1)
+if(tup[0]!=-1): # æœ‰
     tn.write('\r\n')
     time.sleep(1)
     content = tn.read_very_eager().decode('uao_decode', 'ignore')
-else: # ¨S¦³
+else: # æ²’æœ‰
     content = tup[2].decode('uao_decode', 'ignore')
 
-for i in range(1,3):
+#articleEndStr = '\x1B[34;46m æ–‡ç« é¸è®€ \x1B[31;47m (y)\x1B[30må›æ‡‰ \x1B[31m(=\\[]<>-+;\'`jk)\x1B[30mç›¸é—œä¸»é¡Œ \x1B[31m(/?)\x1B[30mæœå°‹æ¨™é¡Œ \x1B[31m(aA)\x1B[30mæœå°‹ä½œè€… \x1B[m'.decode('uao_decode', 'ignore');
+articleEndStr = 'æœå°‹ä½œè€…'.decode('uao_decode', 'ignore')
+for i in range(startId, endId+1):
+    print 'Crawling article {}'.format(i)
     tn.write(str(i) + '\r\n'*2)
-    #tn.read_very_eager() # used to clear buffer
-    #tn.write('\r\n')
     time.sleep(1)
     content = tn.read_very_eager().decode('uao_decode', 'ignore')
+    # åˆªé™¤æ²’æ¸…ä¹¾æ·¨çš„æ–‡ç« åˆ—è¡¨
     pos = content.find('\x1B[;H\x1B[2J\x1B[47;34m')
     if(pos!=-1): content = content[pos:]
+    counter = 0
+    while(articleEndStr not in content):
+        print '\tdown {}...'.format(counter)
+        tn.write('\x1B[B') # down
+        time.sleep(0.5)
+        content += tn.read_very_eager().decode('uao_decode', 'ignore')
+        counter += 1
+        if(counter>=20): break
     with codecs.open(str(i) + '.txt', 'w', encoding='utf8') as fout: fout.write(content)
     tn.write('q')
 tn.close()
+# python hulaCrawler.py guest 00andychay00 1 5
+# python hulaCrawler.py guest 13_family 1 4
