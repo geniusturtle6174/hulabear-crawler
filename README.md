@@ -11,6 +11,6 @@ Crawler for BBS hulabear
 # Related python documents
 - https://docs.python.org/2/library/telnetlib.html
 
-# Todo
-- Remove repeatitions in article
-- Beautify the output
+# Known Bugs and Todo
+- 文章只有一頁的時候無法刪除底下狀態列
+- Beautify the layout
