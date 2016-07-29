@@ -1,7 +1,7 @@
 # hulabearCrawler
-Crawler for BBS hulabear
-Usage: hulaCrawler.py account board startPostId endPostId [--password PASSWORD]
-Manually copy the bbs.css into "crawled" directory
+- Crawler for BBS hulabear
+- Usage: hulaCrawler.py account board startPostId endPostId [--password PASSWORD]
+- Manually copy the bbs.css into "crawled" directory
 
 # Credits
 - "簡易版 PTT 爬蟲", http://mhwong2007.logdown.com/posts/314403
