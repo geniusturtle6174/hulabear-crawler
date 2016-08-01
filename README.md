@@ -15,4 +15,5 @@
 
 # Known Bugs and Todo
 - 文章只有一頁的時候無法刪除底下狀態列
+- 處理進板畫面的偵測目標字串不應該包含色碼
 - Beautify the layout
